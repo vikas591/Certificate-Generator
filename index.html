@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Certificate Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Great+Vibes&family=Inter:wght@400;500;600&family=Pinyon+Script&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Roboto:wght@400;500;700&family=Montserrat:wght@400;600&family=Lora:ital,wght@0,400;0,600;1,400&family=Pacifico&family=Dancing+Script:wght@400;600&family=Oswald:wght@400;600&family=Libre+Baskerville:wght@400;700&family=EB+Garamond:wght@400;700&family=Open+Sans:wght@400;700&family=Tinos:ital,wght@0,400;0,700;1,400&family=Alex+Brush&family=Poppins:wght@300;400;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <link rel="stylesheet" href="style.css?v=5">
+
+    <!-- Libraries for Export & Cropping -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+</head>
+
+<body>
+    <!-- Access Gate -->
+    <div id="accessGate" class="access-gate">
+        <div class="access-container">
+            <!-- Landing Page -->
+            <div id="landingPage" class="auth-section">
+                <h1 style="margin-bottom: 20px;">Welcome to CertiGen</h1>
+                <div style="text-align: left; margin-bottom: 20px; line-height: 1.6; color: var(--text-color);">
+                    <p><strong>How it works:</strong></p>
+                    <ul style="margin-left: 20px; margin-bottom: 15px;">
+                        <li>Upload your own certificate template or use our default designs.</li>
+                        <li>Upload a CSV file with student names to generate certificates in bulk.</li>
+                        <li>Customize fonts, colors, and positioning for Names, Dates, and Signatures.</li>
+                        <li>Upload a photo of a signature to magically remove the background and place it directly on
+                            the certificate.</li>
+                        <li>Download individual PNG/PDFs or generate a single ZIP/PDF file for all students.</li>
+                    </ul>
+                </div>
+                <button id="goToSecretBtn" class="primary-btn accent"
+                    style="font-size: 1.1rem; padding: 12px 24px;">Click Here to Start</button>
+            </div>
+
+            <div id="secretSection" class="hidden">
+                <h1>CertiGen Access</h1>
+
+                <!-- Login Form -->
+                <div id="loginForm" class="auth-section">
+                    <p>Please enter the secret code to access the generator.</p>
+                    <div class="input-group password-group">
+                        <input type="password" id="secretCodeInput" placeholder="Enter Secret Code">
+                        <button type="button" id="togglePasswordBtn" class="icon-btn" title="Show/Hide Password">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                    <button id="loginBtn" class="primary-btn accent">Enter</button>
+                    <p class="switch-form-text">Don't have a code? <a href="#" id="showRequestFormBtn">Request one</a>
+                    </p>
+                    <p id="loginError" class="error-text hidden">Incorrect code. Please try again.</p>
+                </div>
+
+                <!-- Request Form (Hidden by default) -->
+                <div id="requestForm" class="auth-section hidden">
+                    <p>Request an access code from the Admin.</p>
+                    <div class="input-group">
+                        <input type="text" id="reqName" placeholder="Your Name" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="tel" id="reqPhone" placeholder="Your Mobile Number" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="reqDept" placeholder="Your Department" required>
+                    </div>
+                    <!-- Add your phone number here! Ensure it includes country code without the + -->
+                    <!-- e.g., 919876543210 for India -->
+                    <button id="sendRequestBtn" class="primary-btn">Send Request via WhatsApp</button>
+                    <p class="switch-form-text"><a href="#" id="showLoginFormBtn">Back to Login</a></p>
+                </div>
+
+            </div> <!-- End secretSection -->
+        </div>
+    </div>
+
+    <div class="app-container hidden" id="appContainer">
+        <!-- Sidebar Controls -->
+        <aside class="sidebar">
+            <div class="brand" style="display: flex; justify-content: space-between; align-items: center;">
+                <h1>CertiGen</h1>
+                <button id="logoutBtn" class="icon-btn danger-text" title="Logout"
+                    style="background: none; border: none; cursor: pointer; color: var(--danger-color); padding: 5px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="feather feather-log-out">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="control-section">
+                <h2>1. Select Template</h2>
+                <div class="template-grid">
+                    <img src="assets/templates/template1.png" class="template-thumb selected"
+                        data-src="assets/templates/template1.png" alt="Classic">
+                    <img src="assets/templates/template2.png" class="template-thumb"
+                        data-src="assets/templates/template2.png" alt="Modern">
+                    <img src="assets/templates/template3.png" class="template-thumb"
+                        data-src="assets/templates/template3.png" alt="Creative">
+                    <img src="assets/templates/template4.png" class="template-thumb"
+                        data-src="assets/templates/template4.png" alt="Elegant">
+                    <img src="assets/templates/template5.png" class="template-thumb"
+                        data-src="assets/templates/template5.png" alt="Minimalist">
+                </div>
+                <div class="upload-box">
+                    <label for="templateUpload" class="upload-btn">
+                        <span>Upload Custom Template</span>
+                        <input type="file" id="templateUpload" accept="image/png, image/jpeg">
+                    </label>
+                    <button id="removeTemplate" class="primary-btn danger-btn hidden"
+                        style="margin: 0; width: auto;">Remove</button>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+                    <button id="eraseTemplateBtn" class="primary-btn outline-btn" style="flex: 1;">Erase / Edit</button>
+                    <button id="createTemplateBtn" class="primary-btn secondary" style="flex: 1;">Create Own</button>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h2>2. Student Data (CSV)</h2>
+                <div class="csv-upload-container">
+                    <div class="csv-buttons-row">
+                        <label for="csvUpload" id="csvUploadLabel" class="primary-btn outline-btn">
+                            Upload CSV
+                            <input type="file" id="csvUpload" accept=".csv">
+                        </label>
+                        <button id="removeCsv" class="primary-btn danger-btn hidden">Remove</button>
+                    </div>
+                    <span id="csvStatus" class="status-text">No file loaded</span>
+                    <div id="csvNameList" class="csv-name-list"></div>
+                </div>
+                <p class="help-text">Mandatory column: <strong>Name</strong></p>
+            </div>
+
+            <div class="control-section">
+                <h2>3. Text Customization</h2>
+
+                <div class="element-selector">
+                    <label>Select Element to Edit:</label>
+                    <div class="radio-group">
+                        <input type="radio" name="activeElement" id="elName" value="name" checked>
+                        <label for="elName">Name</label>
+
+                        <input type="radio" name="activeElement" id="elDate" value="date">
+                        <label for="elDate">Date</label>
+
+                        <input type="radio" name="activeElement" id="elSig" value="signature">
+                        <label for="elSig">Signature</label>
+
+                        <input type="radio" name="activeElement" id="elSigLabel" value="signatureLabel">
+                        <label for="elSigLabel">Label</label>
+                    </div>
+                </div>
+
+                <div class="control-group input-group" id="group-name">
+                    <div class="group-header">
+                        <label>Student Name (Single)</label>
+                        <label class="toggle-label"><input type="checkbox" id="nameVisible" checked> Show</label>
+                    </div>
+                    <div class="input-with-nav">
+                        <button id="prevName" class="nav-btn" title="Previous Name">&lt;</button>
+                        <input type="text" id="studentNameInput" placeholder="Enter Name">
+                        <button id="addNameBtn" class="nav-btn" title="Add to List"
+                            style="color: var(--primary-color); font-weight: bold; font-size: 1.2rem; padding: 0 10px;">+</button>
+                        <button id="clearNameBtn" class="nav-btn" title="Clear Name"
+                            style="color: var(--danger-color); font-weight: bold; padding: 0 8px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path
+                                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                                </path>
+                            </svg>
+                        </button>
+                        <button id="nextName" class="nav-btn" title="Next Name">&gt;</button>
+                    </div>
+                </div>
+
+                <div class="control-group input-group hidden" id="group-date">
+                    <div class="group-header">
+                        <label>Date Text</label>
+                        <label class="toggle-label"><input type="checkbox" id="dateVisible" checked> Show</label>
+                    </div>
+                    <input type="text" id="dateInput" placeholder="Enter Date">
+                </div>
+
+                <div class="control-group input-group hidden" id="group-signature">
+                    <div class="group-header">
+                        <label>Signature Text</label>
+                        <label class="toggle-label"><input type="checkbox" id="signatureVisible" checked> Show</label>
+                    </div>
+                    <input type="text" id="signatureInput" placeholder="Signatory Name">
+                    <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+                        <button id="drawSignatureBtn" class="primary-btn secondary"
+                            style="margin-top: 0; width: 100%;">Draw
+                            E-Sign</button>
+                    </div>
+                    <button id="removeSignatureImg" class="primary-btn danger-btn hidden"
+                        style="margin-top: 10px;">Remove Image</button>
+                </div>
+
+                <div class="control-group input-group hidden" id="group-signatureLabel">
+                    <div class="group-header">
+                        <label>Label Text</label>
+                        <label class="toggle-label"><input type="checkbox" id="signatureLabelVisible" checked>
+                            Show</label>
+                    </div>
+                    <input type="text" id="signatureLabelInput" placeholder="Designation (e.g. Principal)">
+                </div>
+
+                <div class="control-group">
+                    <label>Font Family</label>
+                    <select id="fontFamily">
+                        <option value="'Great Vibes', cursive">Great Vibes</option>
+                        <option value="'Pinyon Script', cursive">Pinyon Script</option>
+                        <option value="'Cinzel', serif">Cinzel</option>
+                        <option value="'Playfair Display', serif">Playfair Display</option>
+                        <option value="'Roboto', sans-serif">Roboto</option>
+                        <option value="'Montserrat', sans-serif">Montserrat</option>
+                        <option value="'Lora', serif">Lora</option>
+                        <option value="'Pacifico', cursive">Pacifico</option>
+                        <option value="'Dancing Script', cursive">Dancing Script</option>
+                        <option value="'Oswald', sans-serif">Oswald</option>
+                        <option value="'Libre Baskerville', serif">Baskerville</option>
+                        <option value="'EB Garamond', serif">Garamond</option>
+                        <option value="'Times New Roman', 'Tinos', serif">Times New Roman</option>
+                        <option value="'Open Sans', sans-serif">Open Sans</option>
+                        <option value="Arial, sans-serif">Arial</option>
+                        <option value="'Helvetica Neue', Helvetica, Arial, sans-serif">Helvetica Neue</option>
+                        <option value="'Calibri', 'Candara', 'Segoe UI', sans-serif">Calibri</option>
+                        <option value="'Pacifico', cursive">Pacifico</option>
+                        <option value="'Alex Brush', cursive">Elegant</option>
+                        <option value="'Poppins', sans-serif">Poppins</option>
+                    </select>
+                </div>
+                <div class="control-row">
+                    <div class="control-group">
+                        <label>Size (px)</label>
+                        <input type="number" id="fontSize" value="60" min="10" max="200">
+                    </div>
+                    <div class="control-group">
+                        <label>Color</label>
+                        <input type="color" id="fontColor" value="#333333">
+                    </div>
+                </div>
+                <div class="control-row">
+                    <div class="control-group">
+                        <label>Pos X</label>
+                        <input type="number" id="posX" value="0">
+                    </div>
+                    <div class="control-group">
+                        <label>Pos Y</label>
+                        <input type="number" id="posY" value="0">
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-section footer-actions">
+                <h2>4. Generate & Download</h2>
+                <button id="downloadOne" class="primary-btn">Download Current (PNG)</button>
+                <button id="downloadPDF" class="primary-btn secondary">Download Current (PDF)</button>
+                <div class="bulk-actions">
+                    <button id="downloadZip" class="primary-btn accent">Generate All (ZIP)</button>
+                    <button id="downloadBulkPDF" class="primary-btn accent secondary">Generate All (PDF)</button>
+                </div>
+                <div id="progressContainer" class="progress-container hidden">
+                    <div class="progress-bar-bg">
+                        <div id="progressBar" class="progress-bar-fill"></div>
+                    </div>
+                    <span id="progressText">0%</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Preview Area -->
+        <main class="preview-area">
+            <button id="prevCertBtn" class="preview-nav-btn hidden" title="Previous Certificate">&lt;</button>
+            <div class="canvas-wrapper">
+                <canvas id="certificateCanvas"></canvas>
+            </div>
+            <button id="nextCertBtn" class="preview-nav-btn hidden" title="Next Certificate">&gt;</button>
+        </main>
+    </div>
+
+    <!-- Signature Modal -->
+    <div id="signatureModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Draw Your Signature</h3>
+            <canvas id="signaturePad" width="500" height="200"></canvas>
+            <div class="tool-actions" style="margin-bottom: 10px; display: flex; gap: 10px; align-items: center;">
+                <label style="font-weight: 500; font-size: 14px;">Ink Color:</label>
+                <input type="color" id="signatureInkColor" value="#000000"
+                    style="padding: 0; border: none; width: 30px; height: 30px; cursor: pointer;">
+
+                <button id="penTool" class="primary-btn accent"
+                    style="width: auto; padding: 8px 15px; flex: unset; margin-left: auto;">Pen</button>
+                <button id="eraserTool" class="primary-btn secondary"
+                    style="width: auto; padding: 8px 15px; flex: unset;">Eraser</button>
+            </div>
+            <div class="modal-actions">
+                <button id="clearSignature" class="primary-btn outline-btn danger-btn">Clear All</button>
+                <div style="flex: 1;"></div>
+                <button id="cancelSignature" class="primary-btn secondary"
+                    style="width: auto; margin-right: 10px;">Cancel</button>
+                <button id="saveSignature" class="primary-btn accent" style="width: auto;">Use Signature</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Crop Modal -->
+    <div id="cropModal" class="modal hidden">
+        <div class="modal-content crop-modal-content">
+            <h3>Crop Certificate Template</h3>
+            <div class="crop-container">
+                <img id="cropImage" src="" alt="Picture to crop">
+            </div>
+            <div class="modal-actions mt-3">
+                <button id="cancelCrop" class="primary-btn secondary"
+                    style="width: auto; margin-right: 10px;">Cancel</button>
+                <button id="applyCrop" class="primary-btn accent" style="width: auto;">Apply Crop</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Erase Template Modal -->
+    <div id="templateEraseModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 90vw; width: 800px;">
+            <h3>Erase Default Text from Template</h3>
+            <p style="font-size: 0.9em; color: var(--text-secondary); margin-bottom: 10px;">Drag over the text you want
+                to remove. You can change the eraser color to match your certificate background.</p>
+            <div class="tool-actions" style="margin-bottom: 10px; display: flex; gap: 15px; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <label style="margin: 0; font-size: 13px; font-weight: 500;">Eraser Size:</label>
+                    <input type="range" id="eraseBrushSize" min="5" max="100" value="30">
+                </div>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <label style="margin: 0; font-size: 13px; font-weight: 500;">Eraser Color:</label>
+                    <input type="color" id="eraseBrushColor" value="#ffffff" style="cursor: pointer;">
+                </div>
+            </div>
+            <div class="canvas-container"
+                style="max-height: 55vh; overflow: auto; border: 1px solid #ccc; background: #e2e8f0; display: flex; justify-content: center; border-radius: 8px; cursor: crosshair;">
+                <canvas id="templateEraseCanvas"></canvas>
+            </div>
+            <div class="modal-actions mt-3" style="display: flex; justify-content: space-between;">
+                <div style="display: flex; gap: 10px;">
+                    <button id="clearEraseEdits" class="primary-btn danger-btn outline-btn" style="width: auto;">Revert
+                        to Original</button>
+                    <button id="undoEraseBtn" class="primary-btn secondary" style="width: auto;">Undo</button>
+                </div>
+                <div>
+                    <button id="cancelEraseEdit" class="primary-btn secondary"
+                        style="width: auto; margin-right: 10px;">Cancel</button>
+                    <button id="saveEraseEdit" class="primary-btn accent" style="width: auto;">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template Builder Modal -->
+    <div id="templateBuilderModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 90vw; width: 800px;">
+            <h3>Create Custom Template</h3>
+
+            <div class="builder-controls"
+                style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; max-height: 40vh; overflow-y: auto;">
+                <div class="control-group">
+                    <label>Background Color</label>
+                    <input type="color" id="builderBgColor" value="#ffffff" style="width: 100%;">
+                </div>
+                <div class="control-group">
+                    <label>Border Style</label>
+                    <select id="builderBorder">
+                        <option value="none">None</option>
+                        <option value="solid" selected>Solid Line</option>
+                        <option value="double">Double Line</option>
+                        <option value="gold-ornate">Gold Ornamental (Pattern)</option>
+                        <option value="corner-accents">Corner Accents</option>
+                        <option value="elegant-frame">Elegant Frame</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Border Color</label>
+                    <input type="color" id="builderBorderColor" value="#003366" style="width: 100%;">
+                </div>
+                <div class="control-group">
+                    <label>Badge / Ribbon</label>
+                    <select id="builderBadge">
+                        <option value="none">None</option>
+                        <option value="gold-seal" selected>Gold Seal (Bottom Center)</option>
+                        <option value="blue-ribbon">Blue Ribbon (Corner)</option>
+                        <option value="red-ribbon">Red Ribbon (Corner)</option>
+                        <option value="gold-medal">Gold Medal (Center)</option>
+                    </select>
+                </div>
+                <!-- New Custom Text and Design Controls -->
+                <div class="control-group" style="flex: 1 1 100%;">
+                    <label>Header Title</label>
+                    <input type="text" id="builderHeader" value="CERTIFICATE OF APPRECIATION"
+                        style="width: 100%; border: 1px solid #ddd; padding: 4px; border-radius: 4px;">
+                </div>
+                <div class="control-group" style="flex: 1 1 100%;">
+                    <label>Subtitle / Presented To</label>
+                    <input type="text" id="builderSubtitle" value="THIS IS PROUDLY PRESENTED TO"
+                        style="width: 100%; border: 1px solid #ddd; padding: 4px; border-radius: 4px;">
+                </div>
+                <div class="control-group" style="flex: 1 1 100%;">
+                    <label>Description / Message</label>
+                    <textarea id="builderDescription" rows="2"
+                        style="width: 100%; border: 1px solid #ddd; padding: 4px; border-radius: 4px; font-family: inherit;">For outstanding dedication and commitment to excellence.</textarea>
+                </div>
+                <div class="control-group">
+                    <label>Center Graphic</label>
+                    <select id="builderCenterGraphic">
+                        <option value="none" selected>None</option>
+                        <option value="star">Star</option>
+                        <option value="wreath">Laurel</option>
+                        <option value="shield">Shield</option>
+                        <option value="diamond">Diamond</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Empty Signature Lines</label>
+                    <select id="builderLines">
+                        <option value="none" selected>None</option>
+                        <option value="one-center">One Line (Center)</option>
+                        <option value="two-sides">Two Lines (Bottom Sides)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="canvas-container"
+                style="max-height: 35vh; overflow: hidden; border: 1px solid #ccc; background: #f8fafc; display: flex; justify-content: center; border-radius: 8px;">
+                <canvas id="builderCanvas" width="1056" height="816"
+                    style="max-height: 100%; max-width: 100%; object-fit: contain;"></canvas>
+                <!-- 8.5 x 11 at 96 DPI roughly landscape -->
+            </div>
+
+            <div class="modal-actions mt-3">
+                <button id="cancelBuilder" class="primary-btn secondary"
+                    style="width: auto; margin-right: 10px;">Cancel</button>
+                <button id="applyBuilder" class="primary-btn accent" style="width: auto;">Use This Template</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="templates.js"></script>
+    <script src="script.js?v=6"></script>
+</body>
+
+</html>
